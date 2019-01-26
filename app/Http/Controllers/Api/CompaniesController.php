@@ -13,14 +13,17 @@ use Illuminate\Support\Facades\Validator;
 
 class CompaniesController extends Controller
 {
+    public $perPage = 2;
     /**
+     * @param Request $request
      * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
      */
-    public function index()
+    public function index(Request $request)
     {
-        $companies = Cache::rememberForever('companies', function () {
-            return Company::all();
-        });
+        $page = $request->input('page', 1);
+        $companies = Company::paginate($this->perPage);
+
+        Cache::tags('companies')->put('companies_' . 'pp_' . $this->perPage. '_page_' . $page,  $companies, 60);
 
         return CompanyResource::collection($companies);
     }
@@ -45,7 +48,7 @@ class CompaniesController extends Controller
             'registration_code' => $request->input('registration_code')
         ]);
 
-        CacheHelper::forgetIfExists(['companies']);
+        Cache::tags('companies')->flush();
 
         return new CompanyResource($company);
     }
@@ -91,6 +94,8 @@ class CompaniesController extends Controller
 
         $company->update($request->only(['name', 'registration_code']));
 
+        Cache::tags('companies')->flush();
+
         $cacheKeys = [];
 
         foreach ($company->sellerContracts as $sellerContract) {
@@ -101,10 +106,7 @@ class CompaniesController extends Controller
             $cacheKeys[] = 'contract_' . $clientContract->id;
         }
 
-        CacheHelper::forgetIfExists(array_merge([
-            'companies',
-            'company_' . $company->id
-        ], $cacheKeys));
+        CacheHelper::forgetIfExists(array_merge(['company_' . $company->id], $cacheKeys));
 
         return new CompanyResource($company);
     }
@@ -121,6 +123,8 @@ class CompaniesController extends Controller
             return response()->json('Company has not been found', 400);
         }
 
+        Cache::tags('companies')->flush();
+
         $cacheKeys = [];
 
         foreach ($company->sellerContracts as $sellerContract) {
@@ -132,7 +136,6 @@ class CompaniesController extends Controller
         }
 
         CacheHelper::forgetIfExists(array_merge([
-            'companies',
             'company_' . $company->id,
             'contracts'
         ], $cacheKeys));

@@ -7,6 +7,7 @@ services:
     depends_on:
       - mysql
       - mysql-test
+      - redis
     volumes:
       - ./:/application:cached
 
@@ -46,3 +47,8 @@ services:
       - ./:/application:cached
     depends_on:
       - server
+
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"

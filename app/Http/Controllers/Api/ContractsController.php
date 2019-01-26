@@ -13,14 +13,18 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 
 class ContractsController extends Controller
 {
+    public $perPage = 2;
+
     /**
+     * @param Request $request
      * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
      */
-    public function index()
+    public function index(Request $request)
     {
-        $contracts = Cache::rememberForever('contracts', function () {
-            return Contract::all();
-        });
+        $page = $request->input('page', 1);
+
+        $contracts = Contract::paginate($this->perPage);
+        Cache::tags('contracts')->put('contracts_' . 'pp_' . $this->perPage. '_page_' . $page,  $contracts, 60);
 
         return ContractResource::collection($contracts);
     }
@@ -67,8 +71,9 @@ class ContractsController extends Controller
             'credits' => $request->input('credits'),
         ]);
 
+        Cache::tags('contracts')->flush();
+
         CacheHelper::forgetIfExists([
-            'contracts',
             'company_' . $sellerCompanyId,
             'company_' . $clientCompanyId
         ]);
@@ -139,10 +144,11 @@ class ContractsController extends Controller
             'credits'
         ]));
 
+        Cache::tags('contracts')->flush();
+
         CacheHelper::forgetIfExists([
             'company_' . $contract->seller_company_id,
             'company_' . $contract->client_company_id,
-            'contracts',
             'contract_' . $contract->id,
             'company_' . $sellerCompanyId,
             'company_' . $clientCompanyId
@@ -163,10 +169,11 @@ class ContractsController extends Controller
             return response()->json('Contract has not been found', 400);
         }
 
+        Cache::tags('contracts')->flush();
+
         CacheHelper::forgetIfExists([
             'company_' . $contract->seller_company_id,
             'company_' . $contract->client_company_id,
-            'contracts',
             'contract_' . $contract->id
         ]);
 
