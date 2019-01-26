@@ -13,7 +13,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 
 class ContractsController extends Controller
 {
-    public $perPage = 2;
+    public $perPage = 5;
 
     /**
      * @param Request $request

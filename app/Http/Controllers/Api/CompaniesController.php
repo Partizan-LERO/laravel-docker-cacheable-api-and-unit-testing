@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Validator;
 
 class CompaniesController extends Controller
 {
-    public $perPage = 2;
+    public $perPage = 5;
     /**
      * @param Request $request
      * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
